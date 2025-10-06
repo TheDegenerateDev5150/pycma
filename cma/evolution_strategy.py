@@ -2365,11 +2365,13 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
                                       recombination_weight_condition=None):
         """versatile: limit absolute values of int-coordinates in vector list `dX`
 
-         relative to the current sample standard deviations and by default
-         only when the respective recombination weight is negative.
+        relative to the current sample standard deviations and by default
+        only when the respective recombination weight is negative.
 
-        This function is currently not in effect (called with threshold=inf)
-        and not guarantied to stay as is.
+        This function is currently not in effect (called with
+        threshold=inf) and not guarantied to stay as is. It was introduced
+        before integer centering was applied to solutions with positive
+        weights only.
 
         ``dX == pop_sorted - mold`` where ``pop_sorted`` is a genotype.
 
@@ -2378,10 +2380,12 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
         A 2.3-sigma threshold affects 2 x 1.1% of the unmodified
         (nonsorted) normal samples.
         """
-        if not self.opts['integer_variables'] or not np.isfinite(threshold):
+        if not self.opts['integer_variables']:
             return dX
         if threshold is None:  # TODO: how interpret negative thresholds?
             threshold = 2.3
+        if not np.isfinite(threshold):
+            return dX
         if recombination_weight_condition is None:
             def recombination_weight_condition(w):
                 return w < 0
