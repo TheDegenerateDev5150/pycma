@@ -3056,6 +3056,16 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
             self.mean = array(self.boundary_handler.inverse(
                 self.boundary_handler.repair(self.mean, copy_if_changed=False),
                     copy_if_changed=False), copy=False)
+        if CMAOptions._stationary_sphere:
+            if callable(CMAOptions._stationary_sphere):
+                try:  # use the ratio of two calls with single argument
+                    self.mean *= (CMAOptions._stationary_sphere(self.mean_old) /
+                                CMAOptions._stationary_sphere(self.mean))
+                except TypeError:  # single argument fails, use single call with two arguments
+                    self.mean = CMAOptions._stationary_sphere(self.mean, self.mean_old)
+            else:  # multiply mean by its norm change
+                self.mean *= np.sqrt(np.sum(np.square(self.mean_old)) /
+                                     np.sum(np.square(self.mean)))
         if _new_injections:
             self.pop_injection_directions = self._prepare_injection_directions()
             if (self.opts['verbose'] > 4 and self.countiter < 3 and

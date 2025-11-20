@@ -301,7 +301,11 @@ class CMAOptions(dict):
     """
     _ps_for_pc = False
     _hsig = True  # False == never toggle hsig
-    _stationary_sphere = False  # True or callable like lambda x: cma.ff.elli(x)**0.5
+    _stationary_sphere = False
+    '''`True` or a callable like ``lambda m: cma.ff.elli(m)**0.5`` which is by
+       default used like ``mean *= c(mean_old) / c(mean)`` or, when such a call
+       fails, ``lambda m, m0: m * (cma.ff.elli(m0) / cma.ff.elli(m))**0.5``
+       which is used like ``mean = c(mean, mean_old)``'''
     # @classmethod # self is the class, not the instance
     # @property
     # def default(self):
