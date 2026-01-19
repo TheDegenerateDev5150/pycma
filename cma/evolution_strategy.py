@@ -459,9 +459,9 @@ class CMAEvolutionStrategyResult2(object):
     evals_best``. This is particularly useful with constraints.
     ``best_feasible`` is not accessible by index.
 
-    ``evaluations`` overall done
+    ``evaluations`` overall done, including preceeding runs
 
-    ``iterations`` overall done
+    ``iterations`` done, not including preceeding runs
 
     ``xfavorite`` final distribution mean in "phenotype" space, considered
     to be the current best estimate of the optimum.
@@ -475,7 +475,14 @@ class CMAEvolutionStrategyResult2(object):
     CMAEvolutionStrategy.N and mueff =
     CMAEvolutionStrategy.sp.weights.mueff ~ 0.3 * popsize).
 
-  ``stop`` termination conditions in a dictionary.
+    ``stop`` termination conditions in a dictionary. The attribute
+    ``cma.evolution_strategy.all_stoppings`` containes the termination
+    conditions for all runs from calling `fmin2`.
+
+    ``runs`` number of runs when restarted. Usually these are restarts with
+    increasing population size, IPOP, via `fmin2`. `evaluations` and
+    ``..best..`` entries are carried over, `iterations` are only those from the
+    last run.
 
     CAVEAT: in contrast to a named tuple, this class iterates over items, not
     values, hence ``dict(es.result)`` works as expected. ``list(es.result)`` is
@@ -519,6 +526,7 @@ class CMAEvolutionStrategyResult2(object):
             xfavorite,
             stds,
             stop,
+            runs,
         ):
         """set attributes with the arguments resembling `namedtuple` or `dataclass`"""
         # let's guaranty the attribute order for sure
@@ -533,6 +541,7 @@ class CMAEvolutionStrategyResult2(object):
                                  'xfavorite',
                                  'stds',
                                  'stop',
+                                 'runs',
                                 ))
         self.xbest = xbest  # helps for code inspection?
         self.fbest = fbest
@@ -543,6 +552,7 @@ class CMAEvolutionStrategyResult2(object):
         self.xfavorite = xfavorite
         self.stds = stds
         self.stop = stop
+        self.runs = runs
 
         # in case we forgot a parameter in the second list :-)
         for k, v in self._params:
@@ -3305,7 +3315,8 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
             # TODO: should become self.to_phenotype(self.mean) !?
             self.gp.pheno(self.mean[:], into_bounds=self.boundary_handler.repair),
             self.stds,
-            self.stop()
+            self.stop(),
+            self._irun if hasattr(self, '_irun') else 1 if self.countiter > 0 else 0,
         )
 
     def result_pretty(self, number_of_restarts=0, time_str=None,
@@ -5198,6 +5209,7 @@ def fmin(objective_function, x0, sigma0, *posargs, **kwargs):
 
         # es.out['best'] = best  # TODO: this is a rather suboptimal type for inspection in the shell
         if irun:
+            es._irun = irun
             es.best.update(best)
             # TODO: there should be a better way to communicate the overall best
         return es._result0 + (es.stop(), es, logger)
