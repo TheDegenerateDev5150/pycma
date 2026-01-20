@@ -15,6 +15,20 @@ del absolute_import, division, print_function  #, unicode_literals
 
 _warnings.filterwarnings('once', message="``import moarchiving`` failed.*")
 
+from .boundary_handler import BoundTransform as _BoundTransform
+class BoundTransform(_BoundTransform):
+    def __init__(self, *args, **kwargs):
+        _warnings.warn(
+            "`cma.constraints_handler.BoundTransform` may be removed in future."
+            "\n Use"
+            "\n    cma.BoundTransform\n instead of"
+            "\n    cma.constraints_handler.BoundTransform\n and use"
+            "\n    from cma import BoundTransform\n instead of"
+            "\n    from cma.constraints_handler import BoundTransform",
+            FutureWarning)
+        #    DeprecationWarning)  # doesn't show by default
+        super(BoundTransform, self).__init__(*args, **kwargs)
+
 def _g_pos_max(gvals):
     return max(gi if gi > 0 else 0 for gi in gvals)
 def _g_pos_sum(gvals):
