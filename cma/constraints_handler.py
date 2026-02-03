@@ -701,6 +701,11 @@ class AugmentedLagrangian(object):
         if self.m == 0:
             return
         self._check_dtypes()
+        if self.algorithm not in (1, 2):  # then we don't need the previous self.g
+            if self.g is None:
+                self.g = len(self.lam) * [np.nan]
+            if self.f is None:
+                self.f = np.nan
         if self.g is not None and np.any(self.mu > 0):  # mu==0 makes a zero update anyway
             assert len(self.lam) == len(self.mu) == len(g)
             if 11 < 3 and not self.count and self.chi_domega < 1.05:
