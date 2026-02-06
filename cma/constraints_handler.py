@@ -561,6 +561,10 @@ class AugmentedLagrangian(object):
                 self.mu[idx3] = mu_new[idx3]
             if 11 < 3:  # simple version, this may be good enough
                 self.mu[idx] = mu_new[idx]
+            for i in np.nonzero(idx)[0]:
+                # increase mu to lam / g in case
+                self.mu[i] = min((20 * self.mu[i], max((self.mu[i],
+                                  self.lam[i] / (1e-22 + np.max(np.abs(G[i])))))))
             self._initialized[_and(idx, _or(self.count > 2 + self.dimension,  # in case sign average remains 1
                                             np.abs(sign_average) < 0.8))] = True
         elif all(self._initialized) and all(self.mu > 0):
