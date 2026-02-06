@@ -3893,8 +3893,10 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
     def disp(self, modulo=None, overwrite=None):
         """print current state variables in a single-line.
 
-        Prints only if ``iteration_counter % modulo == 0``.
-        Overwrites the line after iteration `overwrite`.
+        Print if ``iteration_counter % modulo == 0``. Let the line be
+        overwritten when ``iteration > overwrite > 0`` unless ``modulo is True``
+        or ``self.stop()``, where `overwrite` defaults to
+        ``.opts['verb_disp_overwrite']``.
 
         :See also: `disp_annotation`.
         """
@@ -3902,11 +3904,11 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
             modulo = self.opts['verb_disp']
 
         def do_overwrite():
-            if overwrite is None:
-                iters = self.opts.get('verb_disp_overwrite', float('inf'))
-            else:
-                iters = overwrite
-            return not self.stop() and iters > 0 and self.countiter > iters
+            if modulo is True or self.stop():
+                return False
+            overwrite_ = overwrite if overwrite is not None else (
+                            self.opts.get('verb_disp_overwrite', 0))
+            return self.countiter > overwrite_ > 0
 
         # console display
 
@@ -3927,6 +3929,17 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
                     stime = str(int(toc // 60)) + ':' + ("%2.1f" % (toc % 60)).rjust(4, '0')
                 else:
                     stime = ''
+                if not hasattr(self, '_disp_to_be_overwritten'):
+                    self._disp_to_be_overwritten = False
+                overwrite_now = self._disp_to_be_overwritten
+                self._disp_to_be_overwritten = do_overwrite()
+
+                if not overwrite_now and self._disp_to_be_overwritten:
+                    print("    overwriting (to keep lines going set "
+                          "`{'verb_disp_overwrite': 0}` "
+                          "in the 'cma_signals.in' file)")
+                elif overwrite_now:
+                    print('\r\x1b[2K', end='')  # jump to start and clear to end of line
                 print(' '.join((repr(self.countiter).rjust(5),
                                 repr(self.countevals).rjust(6),
                                 '%.15e' % (min(self.fit.fit)),
@@ -3937,10 +3950,11 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
                                 '%6.0e' % (self.sigma * min(self.sigma_vec * self.dC**0.5)),
                                 '%6.0e' % (self.sigma * max(self.sigma_vec * self.dC**0.5)),
                                 stime)),
-                      end='\r' if do_overwrite() else '\n')
+                      end=' -' if self._disp_to_be_overwritten else '  \n')
                 # if self.countiter < 4:
                 sys.stdout.flush()
         return self
+
     def plot(self, *args, **kwargs):
         """plot current state variables using `matplotlib`.
 
