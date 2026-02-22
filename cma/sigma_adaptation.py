@@ -128,23 +128,43 @@ class CMAAdaptSigmaNone(CMAAdaptSigmaBase):
 class CMAAdaptSigmaDistanceProportional(CMAAdaptSigmaBase):
     """artificial setting of ``sigma`` proportional to ||m||,
 
-    specifically ``sigma = coefficient * mueff * norm(mean) / n / c_m``.
+    specifically ``sigma = coefficient * mueff * norm(mean) / dimension / c_m``
+    or ``sigma = coefficient * norm(mean)`` in direct mode.
+
+    >>> import cma
+    >>> cma.evolution_strategy._redistribute_sigma_above = False
+    >>> es = cma.CMAEvolutionStrategy(4 * [1/2], 2, {'verbose': -9,
+    ...         'AdaptSigma': cma.sigma_adaptation.CMAAdaptSigmaDistanceProportional(
+    ...                           1.2, True)})
+    >>> # now we can call es.optimize(...)
+    >>> assert isinstance(es.adapt_sigma, cma.sigma_adaptation.CMAAdaptSigmaDistanceProportional
+    ...                   ), es.adapt_sigma
+    >>> assert es.sigma == 1.2, (es.adapt_sigma.__dict__, es.sigma)
 
     The optimal `coefficient` in infinite dimension is ``1.253 = (pi/2)**0.5``,
     the optimal mueff is ``lambda / pi``, hence the optimal phi is ``pi/2 x
     lambda / pi / 2 = lambda / 4`` where exp(-phi/n) is the (log-)expected
-    converence rate per iteration.
+    convergence rate per iteration.
 
     This is mainly useful for test purposes, e.g. to simulate optimal progress
     rates.
+
+    Details: setting `cma.options_parameters.CMAOptions._stationary_sphere` to
+    `True` has on scaling invariant functions the "same effect". Instead of
+    changing `sigma`, it resets ``norm(mean)`` at the end of `tell`.
     """
-    def __init__(self, coefficient=1.2, **kwargs):
+    def __init__(self, coefficient=1.2, direct_mode=False, **kwargs):
         """pass coefficient multiplier for normalized step-size"""
         super(CMAAdaptSigmaDistanceProportional, self).__init__() # base class provides method hsig()
         self.coefficient = coefficient
-        self.is_initialized = True
-        self._direct_mode = False
+        self.direct_mode = direct_mode
         '''experimental: when True, interpret coefficient as sigma / norm(mean)'''
+        self.is_initialized = False
+    def initialize(self, es, *args, **kwargs):
+        """same as update, set the correct step-size before the first iteration"""
+        self.update(es, **kwargs)
+        self.is_initialized = True
+        return self
     def update(self, es, **kwargs):
         """update ``es.sigma`` by calling `update2`.
         """
@@ -155,10 +175,61 @@ class CMAAdaptSigmaDistanceProportional(CMAAdaptSigmaBase):
         Uses attributes ``.N``, ``.sp.weights.mueff``, ``.mean``, and
         ``.sp.cmean`` of input `es`.
         """
-        if self._direct_mode:
-            return self.coefficient * _norm(es.mean) / es.sigma
-        else:
-            return self.coefficient * es.sp.weights.mueff * _norm(es.mean) / es.N / es.sp.cmean / es.sigma
+        factor = self.coefficient * _norm(es.mean) / es.sigma
+        return factor if self.direct_mode else (
+            factor * es.sp.weights.mueff / es.N / es.sp.cmean)
+
+class CMAAdaptSigmaDistanceProportional2(CMAAdaptSigmaBase):
+    """update ``es.sigma = self.sigma * _norm(es.mean)``,
+
+    where ``self.sigma == es.sigma0 / _norm(x0) ``, for example for test
+    purposes, e.g. to simulate optimal progress rates, where ``self.sigma ==
+    es.sigma0``.
+
+    >>> import cma, warnings
+    >>> cma.evolution_strategy._redistribute_sigma_above = False
+    >>> with warnings.catch_warnings():
+    ...     warnings.simplefilter('ignore', cma.warnings_and_exceptions.NeverTestedWarning)
+    ...     es = cma.CMA(4 * [1/2], 2, {'verbose': -9,
+    ...         'AdaptSigma': cma.sigma_adaptation.CMAAdaptSigmaDistanceProportional2})
+    >>> assert isinstance(es.adapt_sigma, cma.sigma_adaptation.CMAAdaptSigmaDistanceProportional2
+    ...                   ), es.adapt_sigma
+    >>> assert es.adapt_sigma.sigma == 2, (es.adapt_sigma.__dict__, es.sigma0)
+    >>> # now we can call es.optimize(...)
+
+    CAVEAT: this class was never used.
+
+    Details: ``.initialize`` is called in `CMAEvolutionStrategy.__init__`.
+
+    `evolution_strategy._redistribute_sigma_above` changes the meaning
+    of `es.sigma` and would brake this update when invoked. To be safe,
+    assign::
+
+        cma.evolution_strategy._redistribute_sigma_above = False
+
+    before using `CMAAdaptSigmaDistanceProportional2`.
+    """
+    def __init__(self, **kwargs):
+        """pass distance proportional step-size given ``||m|| = 1``"""
+        super(CMAAdaptSigmaDistanceProportional2, self).__init__()  # base class provides method hsig()
+        self.sigma = None
+        self.is_initialized = False
+        _warnings.warn("`CMAAdaptSigmaDistanceProportional2` was never thoroughly tested",
+                       category=_cma_warnings.NeverTestedWarning)
+    def initialize(self, es, *args, **kwargs):
+        """set ``self.sigma = es.sigma0``."""
+        self.norm0 = _norm(es.mean)
+        self.sigma = es.sigma0 / self.norm0
+        self.is_initialized = True
+    def update(self, es, **kwargs):
+        """change `es.sigma` in place, deprecated?"""
+        es.sigma *= self.update2(es, **kwargs)
+    def update2(self, es, **kwargs):
+        """return sigma change factor
+        """
+        if not self.is_initialized:
+            self.initialize(es)
+        return self.sigma * _norm(es.mean) / es.sigma
 
 csa_dampdown_fac = 1  # for the time being a module global variable
 class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
