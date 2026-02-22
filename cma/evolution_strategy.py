@@ -475,9 +475,11 @@ class CMAEvolutionStrategyResult2(object):
     CMAEvolutionStrategy.N and mueff =
     CMAEvolutionStrategy.sp.weights.mueff ~ 0.3 * popsize).
 
-    ``stop`` termination conditions in a dictionary. The attribute
-    ``cma.evolution_strategy.all_stoppings`` containes the termination
-    conditions for all runs from calling `fmin2`.
+    ``stop`` termination conditions in a dictionary. The module attribute
+    ``cma.evolution_strategy.all_stoppings`` and the attribute
+    ``.all_stoppings[1:]`` of `CMAEvolutionStrategy` contain the termination
+    conditions for all runs from a single call of `fmin2`, the latter only when
+    more than one run was conducted.
 
     ``runs`` number of runs when restarted. Usually these are restarts with
     increasing population size, IPOP, via `fmin2`. `evaluations` and
@@ -904,8 +906,10 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
     (5_w,...
     >>> assert es.result.fbest < 1e-8, es.result
 
-    On the Rastrigin function, usually after five restarts the global
-    optimum is located.
+    On the Rastrigin function, usually after five restarts the global optimum is
+    located. When `fmin2` with the `restarts` parameter is used,
+    `es.all_stoppings` and `es.all_best` contain the termination conditions for
+    all runs (when more than one run was conducted).
 
     Using the `multiprocessing` module, we can evaluate the function in
     parallel with a simple modification of the example (however
@@ -1421,6 +1425,12 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
         self._stoptolxstagnation = _StopTolXStagnation(self.mean)
         self.callbackstop = ()
         '''return values of callbacks, used like ``if any(callbackstop)``'''
+        self.all_stoppings = []
+        '''assigned when the run was part of a restarted regime (e.g. IPOP)'''
+        self.all_best = []
+        '''all_best[i] is the best from the ith-run when the run was part of a
+           restarted regime (e.g. IPOP), all_best[0] is then the best of the
+           best.'''
         self.fit = _BlancClass()
         self.fit.fit = None  # objective function values sorted
         self.fit.bndpen = None  # boundary penalty values
@@ -4583,6 +4593,9 @@ def fmin2(objective_function, x0, sigma0,
         ``restarts['maxfevals']`` does not terminate *during* the run or
         restart; to restart from different points (recommended), pass
         ``x0`` as a `callable`; see also parameter ``bipop``.
+        When  more than one run was conducted, ``es.all_stoppings[i]`` and
+        ``es.all_best[i]`` contain the respective value for the i-th run and
+        ``es.all_best[0]`` is the best overall.
     ``restart_from_best=False``
         which point to restart from
     ``incpopsize=2``
@@ -4952,9 +4965,11 @@ def fmin(objective_function, x0, sigma0, *posargs, **kwargs):
         maxiter0 = None  # to be evaluated after the first iteration
         base_evals = 0
 
+        # TODO: how can best align the indices of all_best and all_stoppings?
+        #       currently, module all_stoppings and instance all_stopping do not align
+        _all_best = [ot.BestSolution()]
+        _all_stoppings = [None]  # becomes an alias for self.all_stoppings when irun > 1
         irun = 0
-        best = ot.BestSolution()
-        all_stoppings[:] = []
         while True:  # restart loop
             sigma_factor = 1
 
@@ -5022,7 +5037,7 @@ def fmin(objective_function, x0, sigma0, *posargs, **kwargs):
                              and fmin_options['restart_from_best']):
                     utils.print_warning('CAVE: restart_from_best is often not useful',
                                         verbose=opts['verbose'])
-                    es = CMAEvolutionStrategy(best.x, sigma_factor * sigma0, opts)
+                    es = CMAEvolutionStrategy(_all_best[0].x, sigma_factor * sigma0, opts)
                 else:
                     es = CMAEvolutionStrategy(x0, sigma_factor * sigma0, opts)
                 # return opts, es
@@ -5163,8 +5178,8 @@ def fmin(objective_function, x0, sigma0, *posargs, **kwargs):
                     '\n than ``es.result.xbest`` (on the sphere function with >= 90%'
                     '\n for dimension >= 10 or population size >= 2e3/dimension**3)')
 
-            best.update(es.best, es.sent_solutions)  # in restarted case
-            # es.best.update(best)
+            # best.update(es.best, es.sent_solutions)  # in restarted case
+            # # es.best.update(best)
 
             this_evals = es.countevals - base_evals
             base_evals = es.countevals
@@ -5183,15 +5198,25 @@ def fmin(objective_function, x0, sigma0, *posargs, **kwargs):
                 else:  # poptype == 'large'
                     large_i.append(this_evals)
 
+            if irun == 0:
+                all_stoppings[:] = []
+            all_stoppings.append(dict(es.stop(check=False)))
+            _all_stoppings.append(dict(es.stop(check=False)))
+            _all_best.append(es.best)
+            _all_best[0].update(es.best)
+
+            es.all_stoppings = _all_stoppings
+            es.all_best = _all_best
+
             # final message
             if opts['verb_disp']:
                 es.result_pretty(irun, time.asctime(time.localtime()),
-                                 best.f)
+                                 _all_best[0].f)
 
             irun += 1
+
             # if irun > fmin_opts['restarts'] or 'ftarget' in es.stop() \
             # if irun > restarts or 'ftarget' in es.stop() \
-            all_stoppings.append(dict(es.stop(check=False)))  # keeping the order
             if (irun - runs_with_small > fmin_opts['restarts']['maxrestarts']
                     or es.countevals >= fmin_opts['restarts']['maxfevals']
                     or 'ftarget' in es.stop()
@@ -5208,10 +5233,7 @@ def fmin(objective_function, x0, sigma0, *posargs, **kwargs):
         # while irun
 
         # es.out['best'] = best  # TODO: this is a rather suboptimal type for inspection in the shell
-        if irun:
-            es._irun = irun
-            es.best.update(best)
-            # TODO: there should be a better way to communicate the overall best
+        es._irun = irun
         return es._result0 + (es.stop(), es, logger)
         ### 4560
         # TODO refine output, can #args be flexible?
