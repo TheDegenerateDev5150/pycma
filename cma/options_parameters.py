@@ -775,6 +775,49 @@ class CMAOptions(dict):
                             % (i, N))
                     self['integer_variables'].pop(self['integer_variables'].index(i))
 
+    def normalize_value(self, key):
+        """convert an entry into the normalized form and return the value.
+
+        For versatile options, when we want to allow a nonnormalized form. This
+        needs to be called in each iteration before the option is used and when
+        a `signals_filename` is given.
+
+        For two values, ``[one_value]`` could be good enough (when the same value
+        is a common scenario) because they can be accessed with indices 0 and -1,
+
+        Covered cases are (only one for the time being):
+
+        ``self['CSA_clip_length'] = [lower, upper]`` with the default values
+        ``[-inf, inf]``, respectively. A single value is interpreted as upper
+        bound. Set to `None` if it was an empty `list` or `tuple` or no value
+        was finite.
+
+        """
+        if key == 'CSA_clip_length_value':
+            opts, k = self, key
+            if opts[k] is not None:
+                try:
+                    if len(opts[k]) == 0:  # empty list or tuple
+                        opts[k] = None  # [-inf, inf]
+                    elif len(opts[k]) == 1:
+                        opts[k] = [-inf, opts[k][0]]
+                    elif len(opts[k]) == 2:
+                        opts[k] = sorted(opts[k])
+                    else:
+                        raise ValueError('option CSA_clip_length_value should be a number of len(.) in (0, 1, 2)')
+                except TypeError:  # len(...) failed
+                    opts[k] = [-inf, opts[k]]
+                if not np.isfinite(opts[k][0]) and not np.isfinite(opts[k][1]):
+                    opts[k] = None
+            if opts[k] is not None and (opts[k][0] > 0 or opts[k][1] < 0):
+                raise ValueError('option CSA_clip_length_value must be a single nonnegative'
+                                 ' number or a nonpositive and a nonnegative number but was'
+                                 '\nevaluated to {0}'.format(opts[k]))
+        else:
+            raise ValueError("option '{0}' not covered in CMAOptions.normalize_value"
+                             .format(key))
+        return opts[k]
+
     @property
     def to_namedtuple(self):
         """return options as const attributes of the returned object,
