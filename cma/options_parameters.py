@@ -911,9 +911,13 @@ class CMAParameters(object):
 
         mueff = sp.weights.mueff
 
+        ### set cc, should move after c1 as it must somewhat correlate with c1
         # line 3415
         ## meta_parameters.cc_exponent == 1.0
         b = 1.0
+        # we may want to change b=0.5 or adopt the DD variant Alg.2 p.423
+        # like cc = sqrt(mueff*c1) / 2 = sqrt(c1 * mueff/2) / 1.4 < 1 / 1.4
+        # which is in the current c1 setting sqrt(c1 * mueff) / 1.4
         ## meta_parameters.cc_multiplier == 1.0
         sp.cc = 1.0 * (limit_fac_cc + mueff / N)**b / \
                 (N**b + (limit_fac_cc + 2 * mueff / N)**b)
@@ -931,9 +935,9 @@ class CMAParameters(object):
         ## meta_parameters.c1_multiplier == 1.0
         sp.c1 = (1.0 * opts['CMA_rankone'] * ccovfac * min(1, sp.popsize / 6) *
                  ## meta_parameters.c1_exponent == 2.0
-                 2 / ((N + 1.3)** 2.0 + mueff))
+                 2 / ((N + 1.3)** 2.0 + mueff))  # or mueff/2 as in DD paper?
                  # 2 / ((N + 1.3)** 1.5 + mueff))  # TODO
-                 # 2 / ((N + 1.3)** 1.75 + mueff))  # TODO
+                 # 2 / ((N + 1.3)** 1.75 + mueff))  # TODO, <=0.3777 looks fine on first glace
         # caveat: sp.c1 is NOT used in the update but for computing cmu
         # c1 given by interfaces.StatisticalModelSampler...parameters() equals to
         #    min((1, lam / 6)) * 2 / ((N + 1.3)**2 + mueff)
