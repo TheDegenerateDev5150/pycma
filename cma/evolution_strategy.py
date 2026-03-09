@@ -3079,14 +3079,9 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
              for i in idx[:self.sp.weights.mu]]
 
         # get the genotypes
-        if self.integer_centering is _pass:
-            aa = np.asarray
-            copy = True  # copy (only) when changed in geno
-        else:
-            aa = np.array
-            copy = False  # don't copy twice
-        pop = [self.gp.geno(aa(x),
-                            copy=copy,
+        ih_on = self.integer_centering is not _pass
+        pop = [self.gp.geno(np.array(x) if ih_on else np.asarray(x),
+                            copy=False if ih_on else True,  # don't copy twice
                             from_bounds=self.boundary_handler.inverse,
                             repair=self.repair_genotype,
                             archive=self.sent_solutions)
