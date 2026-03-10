@@ -2933,6 +2933,7 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
                 self.sm.update([(c1 / (c1a + 1e-23))**0.5 * pc] +  # c1a * pc**2 gets c1 * pc**2
                               list(pop_zero_encoded),
                               sampler_weights)
+                self.itereigenupdated = self.countiter  # not in use, better remove?
             if any(np.asarray(self.sm.variances) < 0):
                 raise RuntimeError("A sampler variance has become negative "
                                    "after the update, this must be considered as a bug.\n"
