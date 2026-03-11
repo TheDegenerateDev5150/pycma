@@ -386,7 +386,7 @@ class CMAOptions(dict):
                         """ % (key, key, key), 'check', 'CMAOptions')
 
                     opts[key] = opts.__dict__[key]  # getattr(opts, key)
-                    delattr(opts, key)  # is that cosher?
+                    delattr(opts, key)  # is that kosher?
                     # delattr is necessary to prevent that the attribute
                     # overwrites the dict entry later again
             return opts
@@ -625,7 +625,7 @@ class CMAOptions(dict):
         """
         self.check()
         if defaults is None:
-            defaults = cma_default_options_()
+            defaults = cma_default_options  # has no effect unless the key is wrong?
         # TODO: this needs rather the parameter N instead of loc
         if 'N' in loc:  # TODO: __init__ of CMA can be simplified
             popsize = self('popsize', defaults['popsize'], loc)
