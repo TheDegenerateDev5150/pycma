@@ -212,7 +212,12 @@ from .utilities.utils import BlancClass as _BlancClass
 from .utilities.utils import rglen  #, global_verbosity
 from .utilities.utils import SolutionDict as _SolutionDict
 from .utilities.math import Mh, ifloat as _ifloat
-from .sigma_adaptation import *
+from .sigma_adaptation import (CMAAdaptSigmaBase,
+                               CMAAdaptSigmaNone,
+                               CMAAdaptSigmaDistanceProportional,
+                               CMAAdaptSigmaCSA,
+                               CMAAdaptSigmaMedianImprovement,
+                               CMAAdaptSigmaTPA)
 from . import restricted_gaussian_sampler as _rgs
 
 tell_augmented_lagrangian_logging = None
@@ -1207,7 +1212,7 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
         def instantiate_adapt_sigma(adapt_sigma, self):
             """return instantiated sigma adaptation object"""
             if adapt_sigma is None:
-                utils.print_warning(
+                warnings.warn(
                     "Value `None` for option 'AdaptSigma' is ambiguous and\n"
                     "hence deprecated. AdaptSigma can be set to `True` or\n"
                     "`False` or a class or class instance which inherited from\n"
@@ -1223,6 +1228,9 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
             if isinstance(adapt_sigma, type):  # is a class?
                 # then we want the instance
                 adapt_sigma = adapt_sigma(dimension=self.N, popsize=self.sp.popsize)
+            if not isinstance(adapt_sigma, CMAAdaptSigmaBase):
+                warnings.warn("AdaptSigma={0} is not a CMAAdaptSigmaBase class. "
+                              "This is likely to fail later.".format(adapt_sigma))
             return adapt_sigma
         self.adapt_sigma = instantiate_adapt_sigma(opts['AdaptSigma'], self)
 
