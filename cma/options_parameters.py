@@ -263,6 +263,19 @@ class CMAOptions(dict):
     of at least `tolstagnation` iterations are compared for both, the
     per-iteration best and per-iteration median function value.
 
+    Setting ``cma.options_parameters.CMAOptions._stationary_sphere = True``
+    resets ``norm(mean)`` at the end of `tell` to its previous value. Hence, the
+    mean will not converge but (probably) assume a stationary distribution. This
+    can be useful for testing the behavior on the sphere function. To be amended
+    for scaling invariant functions, `_stationary_sphere` may also be a
+    callable. For long runs, it is advisable to set also::
+
+        cma.options_parameters.cma_default_options['tolupsigma'] = 0
+        cma.evolution_strategy._redistribute_sigma_above = 0
+
+    because ``sigma`` will continuously increase, compensating for the loss of
+    variance in C.
+
     Example
     -------
     ::
