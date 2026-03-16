@@ -2875,10 +2875,14 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
                                         cmu_factor=self.opts['CMA_rankmu']
                                         )
         cc2 = dd_params['cc']
-        self.pc2 = (1 - cc2) * self.pc2 + hsig * (
-                    (cc2 * (2 - cc2) * self.sp.weights.mueff)**0.5 / self.sigma
-                        / cmean) * (self.mean - mold)
-
+        self.pc2 *= 1 - cc2
+        if hsig:
+            self.pc2 += hsig * (cc2 * (2 - cc2) * self.sp.weights.mueff)**0.5 * (
+                          (1 / self.sigma / cmean)) * (self.mean - mold)
+                # self.sigma_vec.warn_norm(
+                #         (1 / self.sigma / cmean) * (self.mean - mold),
+                #         self.sm.transform_inverse,  # used to check the expected length
+                #         self.sp.weights.mueff))
         try:
             self.isotropic_mean_shift  # compute before sigma_vec or C are updated
         except AttributeError:
