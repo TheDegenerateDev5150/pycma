@@ -35,7 +35,7 @@ def cma_default_options_(  # to get keyword completion back
     CMA_const_trace='False  # normalize trace, 1, True, "arithm", "geom", "aeig", "geig" are valid',
     CMA_diagonal='0*100*N/popsize**0.5  # nb of iterations with diagonal covariance matrix,'\
                                         ' True for always',  # TODO 4/ccov_separable?
-    CMA_diagonal_decoding='0  # learning rate multiplier for additional diagonal update',
+    CMA_diagonal_decoding='0  #v learning rate multiplier for additional diagonal update',
     CMA_eigenmethod='np.linalg.eigh  # or cma.utilities.math.eig or pygsl.eigen.eigenvectors',
     CMA_elitist='False  #v or "initial" or True, elitism likely impairs global search performance',
     CMA_injections_threshold_keep_len='1  #v keep length if Mahalanobis length is below the given relative threshold',
@@ -43,7 +43,7 @@ def cma_default_options_(  # to get keyword completion back
                               ' for `True` about 0.16 is used',
     CMA_mirrormethod='2  # 0=unconditional, 1=selective, 2=selective with delay',
     CMA_mu='None  # parents selection parameter, default is popsize // 2',
-    CMA_on='1  # multiplier for all covariance matrix updates',
+    CMA_on='1  #v multiplier for all covariance matrix updates',
     # CMA_sample_on_sphere_surface='False  #v replaced with option randn=cma.utilities.math.randhss, all mutation vectors have the same length, currently (with new_sampling) not in effect',
     CMA_sampler='None  # a class or instance that implements the interface of'\
                        ' `cma.interfaces.StatisticalModelSamplerWithZeroMeanBaseClass`',
