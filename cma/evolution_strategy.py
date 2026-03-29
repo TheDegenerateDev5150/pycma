@@ -1207,7 +1207,8 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
 
         opts.amend_integer_options(N, inopts)
         self.sp = options_parameters.CMAParameters(N, opts, verbose=opts['verbose'] > 0)
-        self.sp0 = self.sp  # looks useless, as it is not a copy
+        self.sp0 = self.sp  # not a copy, works given we reset sp like self.sp = options_parameters
+                            #     .CMAParameters(self.N, self.opts, verbose=False)
 
         def instantiate_adapt_sigma(adapt_sigma, self):
             """return instantiated sigma adaptation object"""
