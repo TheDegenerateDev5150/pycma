@@ -36,7 +36,7 @@
     #  'randn': 'np.random.randn  #v randn(lam, N) must return an np.array of shape (lam, N), see also cma.utilities.math.randhss',
     #  'stall_sigma_change_on_divergence_iterations': 'False  #v number of iterations of median worsenings threshold at which the sigma change is stalled; the default may become 2',
     #  'termination_callback': '[]  #v a function or list of functions returning True for termination, called in `stop` with `self` as argument, could be abused for side effects',
-    #  'timeout': 'inf  #v stop if timeout seconds are exceeded, the string "2.5 * 60**2" evaluates to 2 hours and 30 minutes',
+#  'timeout': '0  #v stop if timeout seconds are exceeded, the string "2.5 * 60**2" evaluates to 2 hours and 30 minutes',
     #  'tolconditioncov': '1e14  #v stop if the condition of the covariance matrix is above `tolconditioncov`',
     #  'tolfacupx': '1e3  #v termination when step-size increases by tolfacupx (diverges). That is, the initial step-size was chosen far too small and better solutions were found far away from the initial solution x0',
     #  'tolflatfitness': '1  #v iterations tolerated with flat fitness before termination',
@@ -48,10 +48,10 @@
     #  'tolx': '1e-11  #v termination criterion: tolerance in x-changes',
     #  'tolxstagnation': '[1e-9, 20, 0.1]  #v termination thresholds for Delta of [mean, iterations, iterations fraction], the latter two are summed; trigger termination if Dmean stays below the threshold over Diter iterations, pass `False` or a negative value to turn off tolxstagnation',
     #  'updatecovwait': 'None  #v number of iterations without distribution update, name is subject to future changes',
-    #  'verb_disp': '100  #v verbosity: display console output every verb_disp iteration',
-    #  'verb_disp_overwrite': 123,
+#  'verb_disp': '1  #v verbosity: display console output every verb_disp iteration',
+#   verb_disp_overwrite='0  #v start overwriting after given iteration, 0==never',
     #  'verb_log': '1  #v verbosity: write data to files every verb_log iteration, writing can be time critical on fast to evaluate functions',
     #  'verb_plot': '0  #v in fmin2(): plot() is called every verb_plot iteration',
-#  'verb_time': 'True  #v output timings on console',
+    #  'verb_time': 'True  #v output timings on console',
     #  'verbose': '3  #v verbosity e.g. of initial/final message and logging,\n -1 is very quiet, <=-9 is maximally quiet, <=-10 ignores the signals_filename'
 }
