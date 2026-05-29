@@ -3951,7 +3951,7 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
             if modulo is True or self.stop():
                 return False
             overwrite_ = overwrite if overwrite is not None else (
-                            self.opts.get('verb_disp_overwrite', 0))
+                            self.opts.get('verb_disp_overwrite', 0) * modulo)
             return self.countiter > overwrite_ > 0
 
         # console display
