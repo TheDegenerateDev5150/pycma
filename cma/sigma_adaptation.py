@@ -231,6 +231,9 @@ _CSA_recompute_params_when_masked = True
    changes the effective dimension. This will interfere with a possible dynamic
    choice of cs or ds via PPO.'''
 _CSA_cs_sqrt = False
+_CSA_damps = None
+'''Value for CSA damping d_sigma (ds), replaces the mu-dependent default computation
+   and is dynamically multiplied by the 'CSA_dampfac' option value'''
 _CSA_dampfac_mueff = 2  # was (always) 2
 '''Damping for large mueff, the default was 2, however 10 would solve issue #231?'''
 _CSA_dampfac_mueff_inner = 3  # smaller is worse on the sectorsphere(44) lam=300
@@ -319,7 +322,13 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
         self.max_delta_log_sigma = 1  # in symmetric use (strict lower bound is -cs/damps anyway)
 
         if es.opts['CSA_disregard_length']:
-            es.opts['CSA_clip_length_value'] = [0, 0]
+            if es.opts['CSA_clip_length_value'] is None:
+                es.opts['CSA_clip_length_value'] = [0, 0]
+            else:
+                _warnings.warn("'CSA_disregard_length'={0} was overruled by"
+                               " 'CSA_clip_length_value'={1}"
+                               .format(es.opts['CSA_disregard_length'],
+                                       es.opts['CSA_clip_length_value']))
             # self.damps = es.opts['CSA_dampfac'] * 1  # * (1.1 - 1/(es.N+1)**0.5)
             # if es.opts['verbose'] > 1:
             #     print('CMAAdaptSigmaCSA Parameters: ')
@@ -351,6 +360,9 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
         `damp_mueff_exponent`, and on the module settings
         ``_CSA_dampfac_mueff_inner, _CSA_dampfac_mueff_attenuation_dimension``.
         """
+        if _CSA_damps is not None:
+            return (self._es_opts['CSA_dampfac'] if damp_fac is None else damp_fac
+                    ) * _CSA_damps
         if popsize is not None:
             self._popsize = popsize  # last used popsize
         if lam_mirr is not None:
