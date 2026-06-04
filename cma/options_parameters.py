@@ -59,7 +59,7 @@ def cma_default_options_(  # to get keyword completion back
     CSA_dampfac='1  #v positive multiplier for step-size damping, 0.3 is close to optimal on the sphere',
     CSA_damp_mueff_exponent='None  # exponent for mueff/N, by default 0.5 and 1 if CSA_squared,'
         ' zero means no dependency of damping on mueff, useful with CSA_disregard_length option',
-    CSA_disregard_length='False  #v True is untested, also changes respective parameters',
+    CSA_disregard_length='False  # True is untested, set CSA_clip_length_value=[0,0] if it was None',
     CSA_clip_length_value='None  #v poorly tested, [0, 0] means const length N**0.5, [-1, 1] allows a variation of +- N/(N+2), etc.',
     CSA_squared='False  #v use squared length for sigma-adaptation ',
     CSA_invariant_path='False  #v pc is invariant and ps (default) is unbiased',

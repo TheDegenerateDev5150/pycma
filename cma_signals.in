@@ -21,7 +21,6 @@
     #  'CMA_on': '1  #v multiplier for all covariance matrix updates',
     #  'CSA_clip_length_value': 'None  #v poorly tested, [0, 0] means const length N**0.5, [-1, 1] allows a variation of +- N/(N+2), etc.',
     #  'CSA_dampfac': '1  #v positive multiplier for step-size damping, 0.3 is close to optimal on the sphere',
-    #  'CSA_disregard_length': 'False  #v True is untested, also changes respective parameters',
     #  'CSA_invariant_path': 'False  #v pc is invariant and ps (default) is unbiased',
     #  'CSA_squared': 'False  #v use squared length for sigma-adaptation ',
     #  'TPA_dampfac': '1  #v positive multiplier for step-size damping with TPA',
