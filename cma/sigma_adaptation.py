@@ -226,6 +226,10 @@ class CMAAdaptSigmaDistanceProportional2(CMAAdaptSigmaBase):
             self.initialize(es)
         return self.sigma * _norm(es.mean) / es.sigma
 
+_CSA_recompute_params_when_masked = True
+'''When `True`, recompute cs and ds when the evolution path is masked which
+   changes the effective dimension. This will interfere with a possible dynamic
+   choice of cs or ds via PPO.'''
 _CSA_cs_sqrt = False
 _CSA_dampfac_mueff = 2  # was (always) 2
 '''Damping for large mueff, the default was 2, however 10 would solve issue #231?'''
@@ -435,8 +439,9 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
             self.ps *= 1 - self.cs
             self.ps += _sqrt(self.cs * (2 - self.cs)) * z
         else:
-            self.cs = self.compute_cs(Neff, es.sp.weights.mueff)
-            self.damps = self.compute_damps(Neff, es.sp.weights.mueff)
+            if _CSA_recompute_params_when_masked:
+                self.cs = self.compute_cs(Neff, es.sp.weights.mueff)
+                self.damps = self.compute_damps(Neff, es.sp.weights.mueff)
             self.ps *= 1 - self.cs
             self.ps[idx] += _sqrt(self.cs * (2 - self.cs)) * z
         self._ps_updated_iteration = es.countiter
