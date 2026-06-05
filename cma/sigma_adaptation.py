@@ -381,7 +381,7 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
             # max((1, damp_in * 0.5**(n2 / es.N)))  # -> damp_in for es.N -> infty
             # max((1, damp_in * (1 - n2 / (es.N + n2))))
             # damp_in**(1 - n2 / (es.N + n2))  # see rerun-issue231
-        return (self._es_opts['CSA_dampfac'] if damp_fac is None else damp_fac) * (
+        return (1 if damp_fac is None else damp_fac) * (
                 0.5
                 + min((1, (self._lam_mirr / (0.159 * self._popsize) - 1)**2))**1 / 2
                 + _CSA_dampfac_mueff * 
@@ -422,9 +422,9 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
     def _update_ps(self, es):
         """update path with isotropic delta mean, possibly clipped.
 
-        From input argument `es`, the attributes isotropic_mean_shift,
+        From input argument `es`, the attributes ``isotropic_mean_shift,
         opts['CSA_clip_length_value'], countiter, sp.weights.mueff,
-        sigma_path_mask are used. opts['CSA_clip_length_value'] can be a single
+        path_mask`` are used. opts['CSA_clip_length_value'] can be a single
         value, the upper bound factor, such that::
 
             max_len = sqrt(N) + opts['CSA_clip_length_value'] * N / (N+2)
@@ -519,6 +519,12 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
         else:
             s = _norm(p) / Mh.chiN(N) - 1
         s *= cs / self.damps
+        try:
+            s /= es.opts['CSA_dampfac']
+        except Exception as e:
+            if _cma_warnings.deliver_warning(self, 'CSA_dampfac multiplication failed'):
+                _warnings.warn("s /= es.opts['CSA_dampfac'] failed with {0} ".format(e)
+                               + _cma_warnings.deliver_warning.message())
         if s < 0:
             s /= self.dampdown_fac
         s_clipped = Mh.minmax(s, -self.max_delta_log_sigma, self.max_delta_log_sigma)
@@ -754,10 +760,6 @@ class CMAAdaptSigmaTPA(CMAAdaptSigmaBase):
                                .format(_N, self.dimension, self.sp.__dict__))
         ### Go
         N, opts, popsize = self.dimension, self._es_opts, self._popsize
-        try:  # get away without finding options
-            damp_fac = opts['TPA_dampfac']
-        except (TypeError, KeyError):
-            damp_fac = 1
         try:
             # Suggested for self.sp.damp:
             #   N**0.5          # (1)
@@ -766,7 +768,6 @@ class CMAAdaptSigmaTPA(CMAAdaptSigmaBase):
             #   0.7 + np.log(N)  # between 2 and 9 very close to N**1/2, for N=7 equal to (1) and (2)
             self.sp.damp = 0.7 + 2 * np.log(N)
             self.sp.damp += 2 * np.log(max((1, popsize - N)))  # fix issue 231
-            self.sp.damp *= damp_fac
         except Exception as e:
             _warnings.warn("Setting TPA damping failed with exception {0} (self={1}, self.sp={2})"
                            .format(e, self.__dict__, self.sp.__dict__))
@@ -833,7 +834,14 @@ class CMAAdaptSigmaTPA(CMAAdaptSigmaBase):
         self.s += self.sp.c * np.sign(z) * tpa_abs_z_with_offset(
                                np.abs(z)**self.sp.z_exponent, self.sp)
         self._last_z = z
-        self._last_multiplier = np.exp(self.s / self.sp.damp
+        try:
+            damp_fac = es.opts['TPA_dampfac']
+        except (TypeError, KeyError, AttributeError) as e:
+            if _cma_warnings.deliver_warning(self, 'TPA_dampfac access failed'):
+                _warnings.warn("damp_fac = es.opts['TPA_dampfac'] failed with {0} ".format(e)
+                               + _cma_warnings.deliver_warning.message())
+            damp_fac = 1
+        self._last_multiplier = np.exp(self.s / self.sp.damp / damp_fac
                                        / (self.sp.dampdown_fac if self.s < 0 else 1))
         self.delta *= self._last_multiplier
         #es.more_to_write.extend([10**z, 10**self.s])
