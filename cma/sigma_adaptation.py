@@ -226,6 +226,7 @@ class CMAAdaptSigmaDistanceProportional2(CMAAdaptSigmaBase):
             self.initialize(es)
         return self.sigma * _norm(es.mean) / es.sigma
 
+_CSA_cs_sqrt = False
 _CSA_dampfac_mueff = 2  # was (always) 2
 '''Damping for large mueff, the default was 2, however 10 would solve issue #231?'''
 _CSA_dampfac_mueff_inner = 3  # smaller is worse on the sectorsphere(44) lam=300
@@ -368,12 +369,11 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
     def compute_cs(self, N, mueff):
         """return a new computation for the decay parameter cs,
 
-        based on the input parameters dimension and mu_w and
-        ``self._es_opts['CSA_disregard_length']``.
+        based on the input parameters dimension and mu_w and _CSA_cs_sqrt.
 
         Details: In Akimoto & Hansen 2020, c_c (not c_sigma) depends on c1 and mueff.
         """
-        if self._es_opts['CSA_disregard_length']:  # experimental, should become new setting!?
+        if _CSA_cs_sqrt:
             ## meta_parameters.cs_exponent == 1.0
             b = 1.0 * 0.5
             ## meta_parameters.cs_multiplier == 1.0
