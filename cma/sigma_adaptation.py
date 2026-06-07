@@ -231,6 +231,7 @@ _CSA_recompute_params_when_masked = True
    changes the effective dimension. This will interfere with a possible dynamic
    choice of cs or ds via PPO.'''
 _CSA_cs_sqrt = False
+_CSA_cs_max = 1/2  # could be 0.3 too (see below)?
 _CSA_damps = None
 '''Value for CSA damping d_sigma (ds), replaces the mu-dependent default computation
    and is dynamically multiplied by the 'CSA_dampfac' option value'''
@@ -320,6 +321,11 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
         '''`CMAAdaptSigmaBase.hsig` uses this attribute value too'''
         self.damps = self.compute_damps(es.N, es.sp.weights.mueff,
                                         es.sp.popsize, es.sp.lam_mirr)
+        # caveat: this would impede sigma increase and hsig, rerun-issue231.ipynb
+        if 11 < 3:
+            es.opts['CSA_clip_length_value'] = [-es.N / es.popsize / 2, es.N / es.popsize / 2]
+            # == 'CSA_clip_length_value': '[-N / popsize / 2, N / popsize / 2]'
+            self.damps = (1 + self.cs) * min((2, max((1, np.log(es.popsize / es.N)))))
         self.dampdown_fac = csa_dampdown_fac
         self.max_delta_log_sigma = 1  # in symmetric use (strict lower bound is -cs/damps anyway)
 
@@ -390,17 +396,27 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
         based on the input parameters dimension and mu_w and _CSA_cs_sqrt.
 
         Details: In Akimoto & Hansen 2020, c_c (not c_sigma) depends on c1 and mueff.
+
+        ``sum((1-c)**i for i = 0,1,...) = 1/c``
+        Last contributes half when ``c = 1/2`` ``(1 = 1/c/2)``
+        Last two contribute half when ``c = 0.29289322`` ``(1 + (1 - c) = 1/c/2 => c = 1 - sqrt(2) / 2)``
+        Alternating contributions: ``1 + (1-c)^2 + ... = alpha * 1 / c``::
+
+           c     alpha  ratio of contributions   bias from order
+           1/2   2/3      2:1                      1/3
+           0.3   0.588    1.426:1 < 3:2            0.176
+
         """
         if _CSA_cs_sqrt:
             ## meta_parameters.cs_exponent == 1.0
             b = 1.0 * 0.5
             ## meta_parameters.cs_multiplier == 1.0
-            cs = 1.0 * (mueff + 1)**b / (N**b + 2 * mueff**b)
+            cs = 1.0 * min((_CSA_cs_max, (mueff + 1)**b / (N**b + 2 * mueff**b)))
             return cs
         ## meta_parameters.cs_exponent == 1.0
         b = 1.0
         ## meta_parameters.cs_multiplier == 1.0
-        cs = 1.0 * (mueff + 2)**b / (N**b + (mueff + 3)**b)
+        cs = 1.0 * min((_CSA_cs_max, (mueff + 2)**b / (N**b + (mueff + 3)**b)))
         return cs
 
     def _update_ps(self, es):
