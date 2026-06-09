@@ -101,6 +101,24 @@ either of these with ``sudo``.
 
 ## Version History
 
+* [Release ``4.5.0``](https://github.com/CMA-ES/pycma/releases/tag/r4.5.0)
+  - console output now starts to overwrite the last line after 4 regular lines,
+    see option `verb_disp_overwrite` which now expresses "number of lines"
+  - introduce number of `runs` attribute in `CMAEvolutionStrategyResult2`
+  - introduce `all_stoppings` and `all_best` module attributes with information
+    collected from restarts
+  - major revision of step-size implementations in `sigma_adaptation.py`
+  - polishing of `AugmentedLagrangian` constraints handler and initialization bug fix
+  - `cma.evolution_strategy.TPA_dimension = 300` sets TPA as default step-size adaptation
+    for dimension >= 300.
+  - improve implementation of ridge fitness functions
+  - implement low effective dimension functions and transformations
+  - implement `optimization_tools.EvaluationsIterator` to compute
+    non-discretized ERT values from non-f-targeted data
+  - implement `s.figpolish` and `s.grid` for convenience
+  - implement `CountWarnings` instance ``deliver_warnings`` to control the
+    number of warnings shown
+
 * [Release ``4.4.4``](https://github.com/CMA-ES/pycma/releases/tag/r4.4.4)
   - fix the fix of [issue 343](https://github.com/CMA-ES/pycma/issues/343)
 
