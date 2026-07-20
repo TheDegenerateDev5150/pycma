@@ -980,7 +980,7 @@ class CMADataLogger(interfaces.BaseDataLogger):
             from matplotlib import pyplot
             from matplotlib.pyplot import figure, subplot, gcf
         except ImportError:
-            ImportError('could not find matplotlib.pyplot module, function plot() is not available')
+            warnings.warn('could not import matplotlib.pyplot module, hence plot() is not available (consider ``pip install matplotlib``)')
             return self
         iabscissa = kwargs.pop('abscissa', iabscissa)  # accept abscissa as keyword too
         if kwargs:
@@ -998,8 +998,8 @@ class CMADataLogger(interfaces.BaseDataLogger):
             if not self.es.stop() and self.es.countiter > self.last_skipped_iteration:
                 # print(self.timer_plot.toc, self.relative_allowed_time_for_plotting, self.timer_all.toc)
                 # check whether plotting is cheap enough
-                if self.es.countiter < 3 or self.timer_all.elapsed < 0.15 or (  # avoid warning when too few data are available
-                    self.timer_plot.toc > self.relative_allowed_time_for_plotting * self.timer_all.toc
+                if self.es.countiter < 2 or (  # avoid warning when too few data are available
+                    self.timer_plot.toc > self.relative_allowed_time_for_plotting * (0.1 + self.timer_all.toc)
                    ):
                     self.timer_plot.pause()  # just in case
                     self.last_skipped_iteration = self.es.countiter
@@ -1969,8 +1969,8 @@ class CMADataLogger(interfaces.BaseDataLogger):
             warnings.warn('pyplot.ion raised exception "{0}"'.format(e))
         try:
             pyplot.show()  # in non-interactive mode: block until the figures have been closed
-        except Exception:
-            pass
+        except Exception as e:
+            warnings.warn('pyplot.show raised exception "{0}"'.format(e))
         # https://github.com/efiring/matplotlib/commit/94c5e161d1f3306d90092c986694d3f611cc5609
         # https://stackoverflow.com/questions/6130341/exact-semantics-of-matplotlibs-interactive-mode-ion-ioff
         pyplot.rcParams['font.size'] = self.original_fontsize  # changes font size in current figure which defeats the original purpose
