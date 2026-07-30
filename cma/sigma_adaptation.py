@@ -231,6 +231,7 @@ _CSA_recompute_params_when_masked = True
    changes the effective dimension. This will interfere with a possible dynamic
    choice of cs or ds via PPO.'''
 _CSA_cs_sqrt = False
+_CSA_cs = None  # compute_cs returns this value when not None
 _CSA_cs_max = 1/2  # could be 0.3 too (see below)?
 _CSA_damps = None
 '''Value for CSA damping d_sigma (ds), replaces the mu-dependent default computation
@@ -407,6 +408,8 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
            0.3   0.588    1.426:1 < 3:2            0.176
 
         """
+        if _CSA_cs is not None:
+            return _CSA_cs
         if _CSA_cs_sqrt:
             ## meta_parameters.cs_exponent == 1.0
             b = 1.0 * 0.5
