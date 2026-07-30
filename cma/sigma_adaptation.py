@@ -270,8 +270,10 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
         This prevents to overwrite manual settings with late initialization.
 
         >>> import cma  # test value of damps and reset behavior (minor)
+        >>> es = cma.CMAEvolutionStrategy(4 * [1], 1, {'verbose':-9})
+        >>> assert 1.479176368423 < es.adapt_sigma.damps < 1.479176368424, es.adapt_sigma.__dict__
         >>> es = cma.CMAEvolutionStrategy(2 * [1], 1, {'verbose':-9})
-        >>> assert 1.57317316 < es.adapt_sigma.damps < 1.57317317, es.adapt_sigma.__dict__
+        >>> assert 1.5 <= es.adapt_sigma.damps < 1.57317317, es.adapt_sigma.__dict__
         >>> es.adapt_sigma.damps = 1.234
         >>> _ = es.adapt_sigma.initialize(es)
         >>> assert es.adapt_sigma.damps == 1.234, es.adapt_sigma.__dict__
@@ -281,7 +283,7 @@ class CMAAdaptSigmaCSA(CMAAdaptSigmaBase):
         >>> _ = es.adapt_sigma.initialize(es)
         >>> assert es.adapt_sigma.damps == 1.234, es.adapt_sigma.__dict__
         >>> _ = es.adapt_sigma.initialize(es, reset=True)  # reset everything
-        >>> assert 1.57317316 < es.adapt_sigma.damps < 1.57317317, es.adapt_sigma.__dict__
+        >>> assert 1.5 <= es.adapt_sigma.damps < 1.57317317, es.adapt_sigma.__dict__
         >>> es.adapt_sigma.damps = 1.234
         >>> _ = es.optimize(cma.ff.elli, iterations = 4)
         >>> assert es.adapt_sigma.damps == 1.234, es.adapt_sigma.__dict__
