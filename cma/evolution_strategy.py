@@ -265,6 +265,9 @@ round_integer_variables_revert_changes = True
 _redistribute_sigma_above = 1e9
 '''when ``..._above > 1`` and `sigma` becomes too large, push variance from `sigma` to `sigma_vec`'''
 
+TPA_dimension = 300
+'''use TPA instead of CSA when dimension>=TPA_dimension'''
+
 class InjectionWarning(UserWarning):
     """Injected solutions are not passed to tell as expected"""
 
@@ -1220,7 +1223,8 @@ class CMAEvolutionStrategy(interfaces.OOOptimizer):
                     "`cma.sigma_adaptation.CMAAdaptSigmaBase`")
                 adapt_sigma = CMAAdaptSigmaCSA
             elif adapt_sigma is True:
-                if self.opts['CMA_diagonal'] is True and self.N > 299:
+                if self.N >= TPA_dimension:
+                    # if self.opts['CMA_diagonal'] is True and self.N > 299:
                     adapt_sigma = CMAAdaptSigmaTPA
                 else:
                     adapt_sigma = CMAAdaptSigmaCSA
