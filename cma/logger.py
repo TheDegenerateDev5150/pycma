@@ -1963,7 +1963,10 @@ class CMADataLogger(interfaces.BaseDataLogger):
         subplot_adjust and pyplot.subplots_adjust(left=0.09, top=0.96, bottom=0.07, right=0.95)
         # pyplot.tight_layout(rect=(0, 0, 0.96, 1))
         pyplot.gcf().canvas.draw()  # update figure immediately
-        pyplot.ion()  # prevents that the execution blocks after plotting
+        try:
+            pyplot.ion()  # prevents that the execution blocks after plotting
+        except Exception as e:
+            warnings.warn('pyplot.ion raised exception "{0}"'.format(e))
         try:
             pyplot.show()  # in non-interactive mode: block until the figures have been closed
         except Exception:
