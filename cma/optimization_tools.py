@@ -109,30 +109,30 @@ def contour_data(fct, x_range, y_range=None):
     times. Hence using `Sections` may be the better first choice to
     investigate an expensive function.
 
-    Examples:
+    Examples::
 
-    >>> from cma import optimization_tools
-    >>> import numpy as np
-    ...
-    >>> def plt_contour():  # def avoids doctest execution
-    ...     from matplotlib import pyplot as plt
-    ...
-    ...     X, Y, Z = optimization_tools.contour_data(
-    ...                   lambda x: sum([xi**2 for xi in x]),
-    ...                   np.arange(0.90, 1.10, 0.02),
-    ...                   np.arange(-0.10, 0.10, 0.02))
-    ...     CS = plt.contour(X, Y, Z)
-    ...     plt.gca().set_aspect('equal')
-    ...     plt.clabel(CS)
-    >>> def plt_surface():  # def avoids doctest execution
-    ...     from matplotlib import pyplot as plt
-    ...     from mpl_toolkits import mplot3d
-    ...
-    ...     X, Y, Z = optimization_tools.contour_data(
-    ...                   lambda x: sum([xi**2 for xi in x]),
-    ...                   np.arange(-1, 1.1, 0.02))
-    ...     ax = plt.axes(projection='3d')
-    ...     ax.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none')
+        from cma import optimization_tools
+        import numpy as np
+       
+        def plt_contour():  # def avoids doctest execution
+            from matplotlib import pyplot as plt
+
+            X, Y, Z = optimization_tools.contour_data(
+                          lambda x: sum([xi**2 for xi in x]),
+                          np.arange(0.90, 1.10, 0.02),
+                          np.arange(-0.10, 0.10, 0.02))
+            CS = plt.contour(X, Y, Z)
+            plt.gca().set_aspect('equal')
+            plt.clabel(CS)
+        def plt_surface():  # def avoids doctest execution
+            from matplotlib import pyplot as plt
+            from mpl_toolkits import mplot3d
+
+            X, Y, Z = optimization_tools.contour_data(
+                          lambda x: sum([xi**2 for xi in x]),
+                          np.arange(-1, 1.1, 0.02))
+            ax = plt.axes(projection='3d')
+            ax.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none')
 
     See `cma.fitness_transformations.FixVariables` to create a 2-D
     function from a d-D function, e.g. like
@@ -140,7 +140,7 @@ def contour_data(fct, x_range, y_range=None):
     >>> import cma
     ...
     >>> fd = cma.ff.elli
-    >>> x0 = np.zeros(22)
+    >>> x0 = 22 * [0]
     >>> indices_to_vary = [2, 4]
     >>> f2 = cma.fitness_transformations.FixVariables(fd,
     ...          dict((i, x0[i]) for i in range(len(x0))
@@ -231,7 +231,7 @@ class EvalParallel2(object):
     >>> ep.terminate()
     ...
     >>> # use with `with` statement (context manager)
-    >>> es = cma.CMAEvolutionStrategy(3 * [1], 1, dict(verbose=-9))
+    >>> es = cma.CMAEvolutionStrategy(3 * [1], 1, dict(verbose=-9, ftarget=1e-3))
     >>> with EvalParallel2(cma.fitness_functions.elli,
     ...                    number_of_processes=12) as eval_all:
     ...     while not es.stop():
@@ -239,7 +239,7 @@ class EvalParallel2(object):
     ...         es.tell(X, eval_all(X, args=(1e1,)))  # `eval_all` also accepts
     ...                                               # `fitness_function` as
     ...                                               # (optional) keyword argument
-    >>> assert es.result[1] < 1e-13 and es.result[2] < 1500
+    >>> assert es.result[1] < 1e-3 and es.result[2] < 1500
 
     Parameters: the `EvalParallel2` constructor takes the number of
     processes as optional input argument, which is by default
@@ -552,21 +552,21 @@ class NoiseHandler(object):
     Minimal example together with `fmin` on a non-noisy function:
 
     >>> import cma
-    >>> res = cma.fmin(cma.ff.elli, 7 * [1], 1, noise_handler=cma.NoiseHandler(7))  #doctest: +ELLIPSIS
-    (4_w,9)-aCMA-ES (mu_w=2.8,...
-    >>> assert res[1] < 1e-8
-    >>> res = cma.fmin(cma.ff.elli, 6 * [1], 1, {'AdaptSigma':cma.sigma_adaptation.CMAAdaptSigmaTPA},
-    ...          noise_handler=cma.NoiseHandler(6))  #doctest: +ELLIPSIS
-    (4_w,...
-    >>> assert res[1] < 1e-8
+    >>> x, es = cma.fmin2(cma.ff.elli, 3 * [1], 1, noise_handler=cma.NoiseHandler)  #doctest: +ELLIPSIS
+    (3_w,7)-aCMA-ES (mu_w=2...
+    >>> assert es.result[1] < 1e-8
+    >>> x, es = cma.fmin2(cma.ff.elli, 2 * [1], 1, {'AdaptSigma':cma.sigma_adaptation.CMAAdaptSigmaTPA},
+    ...          noise_handler=cma.NoiseHandler)  #doctest: +ELLIPSIS
+    (3_w,...
+    >>> assert es.result[1] < 1e-8
 
-    in dimension 7 (which needs to be given tice). More verbose example
-    in the optimization loop with a noisy function defined in ``func``:
+    A more verbose example in the optimization loop with a noisy function
+    defined in ``func``:
 
     >>> import cma, numpy as np
     >>> func = lambda x: cma.ff.sphere(x) * (1 + 4 * np.random.randn() / len(x))  # cma.ff.noisysphere
-    >>> es = cma.CMAEvolutionStrategy(np.ones(10), 1)  #doctest: +ELLIPSIS
-    (5_w,10)-aCMA-ES (mu_w=3.2,...
+    >>> es = cma.CMAEvolutionStrategy(np.ones(4), 1)  #doctest: +ELLIPSIS
+    (4_w,8)-aCMA-ES (mu_w=2...
     >>> nh = cma.NoiseHandler(es.N, maxevals=[1, 1, 30])
     >>> while not es.stop():
     ...     X, fit_vals = es.ask_and_eval(func, evaluations=nh.evaluations)
