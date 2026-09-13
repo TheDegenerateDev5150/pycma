@@ -129,7 +129,7 @@ class FitnessFunctions(object):  # TODO: this class is not necessary anymore? Bu
             mod = 1
             cma.fmin2(..., callback=lambda es: (es.countiter % mod) or fun('new subspace'))
 
-        would reset the subspace every ``mod` iterations.
+        would reset the subspace every ``mod`` iterations.
 
         Caveat: the `same_subspace` parameter has not been thoroughly tested.
 
@@ -453,7 +453,7 @@ class FitnessFunctions(object):  # TODO: this class is not necessary anymore? Bu
         ``(x[0]**2)**(2/2) + 100 * sum(x[1:]**2)**(1/2)``. In general, return
         ``(x[0]**2)**(exponent0 / 2) + 100 * sum(x[1:]**2)**(ridge_exponent / 2)``.
 
-        The exponents reflect the respective shapes with increasing |x|,
+        The exponents reflect the respective shapes with increasing ``|x|``,
         like 1 for linear, 2 for quadratic, and 0.5 for square root.
 
         See also `ridgeoncircle`.
@@ -499,7 +499,7 @@ class FitnessFunctions(object):  # TODO: this class is not necessary anymore? Bu
         this factor is not parametrized but equals in effect ``2 * sqrt(n)``,
         see below.
 
-        ``inner_expo = 1`` is the exponent for both, |x| and r in the first
+        ``inner_expo = 1`` is the exponent for both, ``|x|`` and r in the first
         term. It creates an implicit `factor` multiplier which is, close to the
         ridge, about ``inner_expo * sqrt(n)**(inner_expo - 1)``, hence 1 by
         default. The `happycat` default is 2 which makes the `factor` multiplier
